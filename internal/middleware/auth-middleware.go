@@ -38,7 +38,11 @@ func Protected() fiber.Handler {
 				JSON(fiber.Map{"error": "Invalid or expired token"})
 		}
 
-		claims := token.Claims.(jwt.MapClaims)
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			return c.Status(fiber.StatusUnauthorized).
+				JSON(fiber.Map{"error": "Invalid token claims"})
+		}
 
 		c.Locals("user_id", claims["user_id"])
 		c.Locals("role", claims["role"])
