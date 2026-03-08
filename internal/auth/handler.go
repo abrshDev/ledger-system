@@ -4,13 +4,15 @@ import (
 	"os"
 
 	"github.com/abrshDev/ledger-system/internal/user"
+	"github.com/abrshDev/ledger-system/internal/wallet"
 	"github.com/abrshDev/ledger-system/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthHandler struct {
-	repo *user.Repository
+	repo          *user.Repository
+	walletService *wallet.Service
 }
 
 type RegisterRequest struct {
@@ -25,8 +27,8 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func NewAuthHandler(repo *user.Repository) *AuthHandler {
-	return &AuthHandler{repo: repo}
+func NewAuthHandler(repo *user.Repository, walletService *wallet.Service) *AuthHandler {
+	return &AuthHandler{repo: repo, walletService: walletService}
 }
 
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
@@ -48,7 +50,12 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"error": err.Error()})
 	}
-
+	// create wallet for the user
+	err = h.walletService.CreateWallet(user.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(fiber.Map{"error": "failed to create wallet"})
+	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"id":       user.ID,
 		"username": user.Username,
