@@ -6,6 +6,7 @@ import (
 
 	"github.com/abrshDev/ledger-system/internal/ledger"
 	"github.com/abrshDev/ledger-system/internal/payment"
+	"github.com/abrshDev/ledger-system/internal/transaction"
 	"github.com/abrshDev/ledger-system/internal/user"
 	"github.com/abrshDev/ledger-system/internal/wallet"
 	"gorm.io/driver/postgres"
@@ -43,6 +44,7 @@ func ConnectDb() (*gorm.DB, error) {
 		&wallet.Wallet{},
 		&payment.Payment{},
 		&ledger.LedgerEntry{},
+		&transaction.Transaction{},
 	); err != nil {
 		return nil, err
 	}
