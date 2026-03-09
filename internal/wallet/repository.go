@@ -24,3 +24,6 @@ func (r *Repository) GetByUserID(userID uint) (*Wallet, error) {
 
 	return &wallet, nil
 }
+func (r *Repository) Update(wallet *Wallet) error {
+	return r.db.Save(wallet).Error
+}

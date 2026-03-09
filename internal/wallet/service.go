@@ -26,3 +26,11 @@ func (s *Service) GetBalance(userID uint) (int64, error) {
 
 	return wallet.Balance, nil
 }
+
+func (s *Service) Update(wallet *Wallet) error {
+	return s.repo.Update(wallet)
+}
+
+func (s *Service) GetWalletByUserID(userID uint) (*Wallet, error) {
+	return s.repo.GetByUserID(userID)
+}
