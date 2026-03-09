@@ -16,7 +16,7 @@ func NewService(repo *Repository, walletSvc *wallet.Service) *Service {
 	}
 }
 
-func (s *Service) Deposite(userID uint, amount int64) error {
+func (s *Service) Deposit(userID uint, amount int64) error {
 	wallet, err := s.walletSvc.GetWalletByUserID(userID)
 	if err != nil {
 		return err
