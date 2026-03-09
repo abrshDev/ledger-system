@@ -12,6 +12,7 @@ import (
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	userRepo := user.NewRepository(db)
 	walletRepo := wallet.NewRepository(db)
+
 	walletService := wallet.NewService(walletRepo)
 
 	authHandler := auth.NewAuthHandler(userRepo, walletService)
