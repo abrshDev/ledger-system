@@ -44,7 +44,13 @@ func Protected() fiber.Handler {
 				JSON(fiber.Map{"error": "Invalid token claims"})
 		}
 
-		c.Locals("user_id", claims["user_id"])
+		userID, ok := claims["user_id"].(float64)
+		if !ok {
+			return c.Status(fiber.StatusUnauthorized).
+				JSON(fiber.Map{"error": "Invalid user_id in token"})
+		}
+
+		c.Locals("user_id", uint(userID))
 		c.Locals("role", claims["role"])
 
 		return c.Next()
