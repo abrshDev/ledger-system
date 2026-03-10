@@ -15,6 +15,9 @@ func NewHandler(service *Service) *Handler {
 type DepositRequest struct {
 	Amount int64 `json:"amount"`
 }
+type WithdrawRequest struct {
+	Amount int64 `json:"amount"`
+}
 
 func (h *Handler) Deposit(c *fiber.Ctx) error {
 
@@ -35,5 +38,24 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "deposit successful",
+	})
+}
+
+func (h *Handler) Withdraw(c *fiber.Ctx) error {
+	var body WithdrawRequest
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{"error": "invalid request"})
+	}
+
+	userID := c.Locals("user_id").(uint)
+	err := h.service.Withdraw(userID, body.Amount)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "withdraw successful",
 	})
 }
