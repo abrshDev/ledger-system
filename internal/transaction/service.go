@@ -1,6 +1,8 @@
 package transaction
 
 import (
+	"fmt"
+
 	"github.com/abrshDev/ledger-system/internal/wallet"
 )
 
@@ -32,4 +34,31 @@ func (s *Service) Deposit(userID uint, amount int64) error {
 		Type:     Deposit,
 	}
 	return s.repo.Create(txn)
+}
+func (s *Service) Withdraw(userID uint, amount int64) error {
+	wallet, err := s.walletSvc.GetWalletByUserID(userID)
+	if err != nil {
+		return err
+	}
+	if wallet.Balance < amount {
+		return fmt.Errorf("insufficient funds")
+	}
+
+	// subtract balance
+	wallet.Balance -= amount
+
+	// update wallet
+	err = s.walletSvc.Update(wallet)
+	if err != nil {
+		return err
+	}
+	// create transaction record
+	txn := &Transaction{
+		FromUserID: &userID,
+		Amount:     amount,
+		Type:       Withdraw,
+	}
+
+	return s.repo.Create(txn)
+
 }
