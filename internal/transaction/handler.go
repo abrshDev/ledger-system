@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"github.com/abrshDev/ledger-system/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,9 +16,11 @@ func NewHandler(service *Service) *Handler {
 type DepositRequest struct {
 	Amount int64 `json:"amount"`
 }
+
 type WithdrawRequest struct {
 	Amount int64 `json:"amount"`
 }
+
 type TransferRequest struct {
 	ToUserID uint  `json:"to_user_id"`
 	Amount   int64 `json:"amount"`
@@ -32,24 +35,12 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 			JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	userIDValue := c.Locals("user_id")
-
-	var userID uint
-
-	switch v := userIDValue.(type) {
-	case float64:
-		userID = uint(v)
-	case uint:
-		userID = v
-	case int:
-		userID = uint(v)
-	default:
-		return c.Status(500).JSON(fiber.Map{
-			"error": "invalid user id type",
-		})
+	userID, err := utils.GetUserID(c)
+	if err != nil {
+		return err
 	}
 
-	err := h.service.Deposit(userID, body.Amount)
+	err = h.service.Deposit(userID, body.Amount)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"error": err.Error()})
@@ -61,14 +52,20 @@ func (h *Handler) Deposit(c *fiber.Ctx) error {
 }
 
 func (h *Handler) Withdraw(c *fiber.Ctx) error {
+
 	var body WithdrawRequest
+
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	userID := c.Locals("user_id").(uint)
-	err := h.service.Withdraw(userID, body.Amount)
+	userID, err := utils.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	err = h.service.Withdraw(userID, body.Amount)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"error": err.Error()})
@@ -78,6 +75,7 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 		"message": "withdraw successful",
 	})
 }
+
 func (h *Handler) Transfer(c *fiber.Ctx) error {
 
 	var body TransferRequest
@@ -87,9 +85,12 @@ func (h *Handler) Transfer(c *fiber.Ctx) error {
 			JSON(fiber.Map{"error": "invalid request"})
 	}
 
-	userID := c.Locals("user_id").(uint)
+	userID, err := utils.GetUserID(c)
+	if err != nil {
+		return err
+	}
 
-	err := h.service.Transfer(userID, body.ToUserID, body.Amount)
+	err = h.service.Transfer(userID, body.ToUserID, body.Amount)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"error": err.Error()})
