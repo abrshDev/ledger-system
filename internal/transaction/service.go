@@ -62,3 +62,49 @@ func (s *Service) Withdraw(userID uint, amount int64) error {
 	return s.repo.Create(txn)
 
 }
+func (s *Service) Transfer(fromUserID uint, toUserID uint, amount int64) error {
+
+	if fromUserID == toUserID {
+		return fmt.Errorf("cannot transfer to yourself")
+	}
+
+	// sender wallet
+	senderWallet, err := s.walletSvc.GetWalletByUserID(fromUserID)
+	if err != nil {
+		return err
+	}
+
+	// receiver wallet
+	receiverWallet, err := s.walletSvc.GetWalletByUserID(toUserID)
+	if err != nil {
+		return err
+	}
+
+	if senderWallet.Balance < amount {
+		return fmt.Errorf("insufficient funds")
+	}
+
+	// update balances
+	senderWallet.Balance -= amount
+	receiverWallet.Balance += amount
+
+	err = s.walletSvc.Update(senderWallet)
+	if err != nil {
+		return err
+	}
+
+	err = s.walletSvc.Update(receiverWallet)
+	if err != nil {
+		return err
+	}
+
+	// transaction record
+	txn := &Transaction{
+		FromUserID: &fromUserID,
+		ToUserID:   &toUserID,
+		Amount:     amount,
+		Type:       Transfer,
+	}
+
+	return s.repo.Create(txn)
+}
