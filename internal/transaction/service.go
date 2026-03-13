@@ -3,18 +3,21 @@ package transaction
 import (
 	"fmt"
 
+	"github.com/abrshDev/ledger-system/internal/ledger"
 	"github.com/abrshDev/ledger-system/internal/wallet"
 )
 
 type Service struct {
-	repo      *Repository
-	walletSvc *wallet.Service
+	repo       *Repository
+	walletSvc  *wallet.Service
+	ledgerRepo *ledger.Repository
 }
 
-func NewService(repo *Repository, walletSvc *wallet.Service) *Service {
+func NewService(repo *Repository, walletSvc *wallet.Service, ledgerRepo *ledger.Repository) *Service {
 	return &Service{
-		repo:      repo,
-		walletSvc: walletSvc,
+		repo:       repo,
+		walletSvc:  walletSvc,
+		ledgerRepo: ledgerRepo,
 	}
 }
 
@@ -98,7 +101,7 @@ func (s *Service) Transfer(fromUserID uint, toUserID uint, amount int64) error {
 		return err
 	}
 
-	// transaction record
+	// create transaction
 	txn := &Transaction{
 		FromUserID: &fromUserID,
 		ToUserID:   &toUserID,
@@ -106,9 +109,35 @@ func (s *Service) Transfer(fromUserID uint, toUserID uint, amount int64) error {
 		Type:       Transfer,
 	}
 
-	return s.repo.Create(txn)
-}
+	err = s.repo.Create(txn)
+	if err != nil {
+		return err
+	}
 
+	// debit entry (sender)
+	err = s.ledgerRepo.Create(&ledger.LedgerEntry{
+		WalletID:      senderWallet.ID,
+		TransactionID: txn.ID,
+		Type:          "debit",
+		Amount:        amount,
+	})
+	if err != nil {
+		return err
+	}
+
+	// credit entry (receiver)
+	err = s.ledgerRepo.Create(&ledger.LedgerEntry{
+		WalletID:      receiverWallet.ID,
+		TransactionID: txn.ID,
+		Type:          "credit",
+		Amount:        amount,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 func (s *Service) GetUserTransactions(userId uint) ([]Transaction, error) {
 	return s.repo.GetByUserID(userId)
 }

@@ -21,7 +21,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 
 	// services
 	walletService := wallet.NewService(walletRepo)
-	txnService := transaction.NewService(txnRepo, walletService)
+	txnService := transaction.NewService(txnRepo, walletService, ledgerRepo)
 
 	// handlers
 	txnHandler := transaction.NewHandler(txnService)
