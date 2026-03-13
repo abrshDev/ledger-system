@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/abrshDev/ledger-system/internal/auth"
+	"github.com/abrshDev/ledger-system/internal/ledger"
 	"github.com/abrshDev/ledger-system/internal/middleware"
 	"github.com/abrshDev/ledger-system/internal/transaction"
 	"github.com/abrshDev/ledger-system/internal/user"
@@ -16,6 +17,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	userRepo := user.NewRepository(db)
 	walletRepo := wallet.NewRepository(db)
 	txnRepo := transaction.NewRepository(db)
+	ledgerRepo := ledger.NewRepository(db)
 
 	// services
 	walletService := wallet.NewService(walletRepo)
