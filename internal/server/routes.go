@@ -38,6 +38,7 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	app.Post("/wallet/deposit", middleware.Protected(), txnHandler.Deposit)
 	app.Post("/wallet/withdraw", middleware.Protected(), txnHandler.Withdraw)
 	app.Post("/wallet/transfer", middleware.Protected(), txnHandler.Transfer)
+	app.Get("/wallet/transactions", middleware.Protected(), txnHandler.GetTransactions)
 }
 func NewApp(db *gorm.DB) *fiber.App {
 	app := fiber.New()

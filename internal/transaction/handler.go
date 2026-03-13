@@ -79,7 +79,11 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 func (h *Handler) Transfer(c *fiber.Ctx) error {
 
 	var body TransferRequest
-
+	if body.Amount <= 0 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "amount must be greater than zero",
+		})
+	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"error": "invalid request"})
@@ -98,5 +102,23 @@ func (h *Handler) Transfer(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "transfer successful",
+	})
+}
+
+func (h *Handler) GetTransactions(c *fiber.Ctx) error {
+	userID, err := utils.GetUserID(c)
+	if err != nil {
+		return err
+	}
+
+	txns, err := h.service.GetUserTransactions(userID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "failed to fetch transactions",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"transactions": txns,
 	})
 }

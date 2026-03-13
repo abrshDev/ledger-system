@@ -108,3 +108,7 @@ func (s *Service) Transfer(fromUserID uint, toUserID uint, amount int64) error {
 
 	return s.repo.Create(txn)
 }
+
+func (s *Service) GetUserTransactions(userId uint) ([]Transaction, error) {
+	return s.repo.GetByUserID(userId)
+}
