@@ -75,18 +75,22 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 		"message": "withdraw successful",
 	})
 }
-
 func (h *Handler) Transfer(c *fiber.Ctx) error {
 
 	var body TransferRequest
+
+	// Parse request body first
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request",
+		})
+	}
+
+	// Validate amount after parsing
 	if body.Amount <= 0 {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "amount must be greater than zero",
 		})
-	}
-	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{"error": "invalid request"})
 	}
 
 	userID, err := utils.GetUserID(c)
@@ -96,8 +100,9 @@ func (h *Handler) Transfer(c *fiber.Ctx) error {
 
 	err = h.service.Transfer(userID, body.ToUserID, body.Amount)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	return c.JSON(fiber.Map{
