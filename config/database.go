@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/abrshDev/ledger-system/internal/ledger"
-	"github.com/abrshDev/ledger-system/internal/payment"
+
 	"github.com/abrshDev/ledger-system/internal/transaction"
 	"github.com/abrshDev/ledger-system/internal/user"
 	"github.com/abrshDev/ledger-system/internal/wallet"
@@ -42,7 +42,7 @@ func ConnectDb() (*gorm.DB, error) {
 	if err := db.AutoMigrate(
 		&user.User{},
 		&wallet.Wallet{},
-		&payment.Payment{},
+
 		&ledger.LedgerEntry{},
 		&transaction.Transaction{},
 	); err != nil {

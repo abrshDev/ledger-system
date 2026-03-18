@@ -25,23 +25,58 @@ func NewService(repo *Repository, walletSvc *wallet.Service, ledgerRepo *ledger.
 }
 
 func (s *Service) Deposit(userID uint, amount int64) error {
-	wallet, err := s.walletSvc.GetWalletByUserID(userID)
-	if err != nil {
-		return err
+	// 1. Validate input
+	if amount <= 0 {
+		return fmt.Errorf("amount must be greater than zero")
 	}
-	wallet.Balance += amount
-	err = s.walletSvc.Update(wallet)
-	if err != nil {
-		return err
-	}
-	txn := &Transaction{
-		ToUserID: &userID,
-		Amount:   amount,
-		Type:     Deposit,
-	}
-	return s.repo.Create(txn)
+
+	// 2. Start DB transaction
+	return s.db.Transaction(func(tx *gorm.DB) error {
+
+		// 3. Get wallet INSIDE transaction
+		var wallet wallet.Wallet
+		if err := tx.Where("user_id = ?", userID).First(&wallet).Error; err != nil {
+			return err
+		}
+
+		// 4. Update balance
+		wallet.Balance += amount
+
+		// 5. Save updated wallet
+		if err := tx.Save(&wallet).Error; err != nil {
+			return err
+		}
+
+		// 6. Create transaction record
+		txn := &Transaction{
+			ToUserID: &userID,
+			Amount:   amount,
+			Type:     Deposit,
+		}
+
+		if err := tx.Create(txn).Error; err != nil {
+			return err
+		}
+
+		// 7. Create ledger entry (credit)
+		if err := tx.Create(&ledger.LedgerEntry{
+			WalletID:      wallet.ID,
+			TransactionID: txn.ID,
+			Type:          "credit",
+			Amount:        amount,
+		}).Error; err != nil {
+			return err
+		}
+
+		// 8. Commit (by returning nil)
+		return nil
+	})
 }
 func (s *Service) Withdraw(userID uint, amount int64) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+
+		return nil
+	})
 	wallet, err := s.walletSvc.GetWalletByUserID(userID)
 	if err != nil {
 		return err
