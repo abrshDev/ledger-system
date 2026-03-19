@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/abrshDev/ledger-system/internal/idempotency"
 	"github.com/abrshDev/ledger-system/internal/ledger"
 
 	"github.com/abrshDev/ledger-system/internal/transaction"
@@ -45,6 +46,7 @@ func ConnectDb() (*gorm.DB, error) {
 
 		&ledger.LedgerEntry{},
 		&transaction.Transaction{},
+		&idempotency.IdempotencyKey{},
 	); err != nil {
 		return nil, err
 	}
