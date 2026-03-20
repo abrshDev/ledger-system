@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/abrshDev/ledger-system/internal/auth"
+	"github.com/abrshDev/ledger-system/internal/idempotency"
 	"github.com/abrshDev/ledger-system/internal/ledger"
 	"github.com/abrshDev/ledger-system/internal/middleware"
 	"github.com/abrshDev/ledger-system/internal/transaction"
@@ -18,10 +19,11 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	walletRepo := wallet.NewRepository(db)
 	txnRepo := transaction.NewRepository(db)
 	ledgerRepo := ledger.NewRepository(db)
+	idemRepo := idempotency.NewRepository(db)
 
 	// services
 	walletService := wallet.NewService(walletRepo)
-	txnService := transaction.NewService(txnRepo, walletService, ledgerRepo, db)
+	txnService := transaction.NewService(txnRepo, walletService, ledgerRepo, db, idemRepo)
 
 	// handlers
 	txnHandler := transaction.NewHandler(txnService)

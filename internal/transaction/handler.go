@@ -76,17 +76,14 @@ func (h *Handler) Withdraw(c *fiber.Ctx) error {
 	})
 }
 func (h *Handler) Transfer(c *fiber.Ctx) error {
-
 	var body TransferRequest
 
-	// Parse request body first
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request",
 		})
 	}
 
-	// Validate amount after parsing
 	if body.Amount <= 0 {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "amount must be greater than zero",
@@ -98,18 +95,18 @@ func (h *Handler) Transfer(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = h.service.Transfer(userID, body.ToUserID, body.Amount)
+	// get idempotency key from header
+	key := c.Get("Idempotency-Key")
+
+	res, status, err := h.service.Transfer(userID, body.ToUserID, body.Amount, key)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "transfer successful",
-	})
+	return c.Status(status).Send(res)
 }
-
 func (h *Handler) GetTransactions(c *fiber.Ctx) error {
 	userID, err := utils.GetUserID(c)
 	if err != nil {
