@@ -1,0 +1,246 @@
+# 💰 Financial Ledger & Payment Core
+
+A production-style backend system for handling financial transactions using **double-entry accounting**, **idempotent APIs**, and **ACID-compliant database operations**.
+
+---
+
+## 🚀 Overview
+
+This project implements a secure and auditable financial system where every movement of money is recorded in a **ledger** instead of relying only on balances.
+
+It ensures:
+
+* No duplicate transactions (idempotency)
+* No inconsistent state (database transactions)
+* Full traceability (ledger entries)
+
+---
+
+## 🧠 Core Concepts
+
+### Ledger System
+
+A ledger records **every financial movement** instead of just storing balances.
+
+### Double-Entry Accounting
+
+Each transaction creates two entries:
+
+* **Debit** → money leaving an account
+* **Credit** → money entering an account
+
+Example:
+User A sends $100 to User B:
+
+* A → debit 100
+* B → credit 100
+
+✔ Total debit always equals total credit
+
+---
+
+## 🏗️ Tech Stack
+
+* **Go (Golang)**
+* **Fiber (HTTP framework)**
+* **GORM (ORM)**
+* **PostgreSQL**
+* **JWT Authentication**
+
+---
+
+## 📁 Project Structure
+
+```
+payment-ledger-system/
+
+cmd/
+    main.go
+
+config/
+    database.go
+
+internal/
+    auth/
+    user/
+    middleware/
+
+    wallet/
+        model.go
+        repository.go
+        service.go
+        handler.go
+
+    transaction/
+        model.go
+        repository.go
+        service.go
+        handler.go
+
+    ledger/
+        model.go
+        repository.go
+
+    idempotency/
+        model.go
+        repository.go
+
+    server/
+        routes.go
+
+pkg/
+    utils/
+```
+
+---
+
+## 🗄️ Database Design
+
+### Wallets
+
+* Stores user balances
+
+### Transactions
+
+* Represents financial operations:
+
+  * deposit
+  * withdraw
+  * transfer
+
+### Ledger Entries
+
+* Records debit/credit for each transaction
+
+### Idempotency Keys
+
+* Prevent duplicate requests
+
+---
+
+## 🔐 Features
+
+### ✅ Authentication
+
+* User registration & login
+* JWT-based protected routes
+
+---
+
+### 💼 Wallet System
+
+* Auto-created per user
+* Balance tracking
+* Safe updates using DB transactions
+
+---
+
+### 🔁 Transactions
+
+Supports:
+
+* Deposit
+* Withdraw
+* Transfer between users
+
+All operations:
+
+* Run inside database transactions
+* Update balances safely
+* Create ledger entries
+
+---
+
+### 📒 Ledger (Double-Entry)
+
+Every transaction creates:
+
+* Debit entry
+* Credit entry
+
+Ensures:
+
+* Full audit trail
+* Financial correctness
+
+---
+
+### 🔁 Idempotency (Retry Safety)
+
+Prevents duplicate financial operations.
+
+#### How it works:
+
+* Client sends `Idempotency-Key`
+* Server hashes request data
+* If request is repeated:
+
+  * Same data → response is replayed
+  * Different data → request is rejected
+
+✔ Guarantees safe retries
+✔ Prevents duplicate transfers
+
+---
+
+### 🔒 Concurrency Safety
+
+* Row-level locking (`FOR UPDATE`)
+* Prevents race conditions and double-spending
+
+---
+
+## ⚙️ API Endpoints
+
+### Auth
+
+* `POST /auth/register`
+* `POST /auth/login`
+
+### Wallet
+
+* `GET /wallet/balance`
+
+### Transactions
+
+* `POST /wallet/deposit`
+* `POST /wallet/withdraw`
+* `POST /wallet/transfer`
+
+---
+
+## 🧪 Example Flow
+
+1. Register users
+2. Deposit funds
+3. Transfer money
+4. Retry transfer with same idempotency key
+
+✔ Only one transaction is created
+✔ Response is safely replayed
+
+---
+
+## 🛡️ Safety Guarantees
+
+* No duplicate transactions
+* No partial updates (ACID transactions)
+* No double-spending (row locking)
+* Full audit history (ledger)
+
+---
+
+## 🚧 Future Improvements
+
+* Refund system (reverse transactions)
+* Transaction status tracking
+* External payment integrations
+* Async processing (queues)
+
+---
+
+## 🧑‍💻 Author
+
+Built as a backend engineering project focusing on **financial system design principles**.
+
+---
