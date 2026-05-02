@@ -1,246 +1,158 @@
-# 💰 Financial Ledger & Payment Core
+# Financial Ledger & Payment Core
 
-A production-style backend system for handling financial transactions using **double-entry accounting**, **idempotent APIs**, and **ACID-compliant database operations**.
+A production-style backend system for handling financial transactions using double-entry accounting, idempotent APIs, and ACID-compliant database operations.
 
----
+## Overview
 
-## 🚀 Overview
-
-This project implements a secure and auditable financial system where every movement of money is recorded in a **ledger** instead of relying only on balances.
+This project implements a secure and auditable financial system where every movement of money is recorded in a ledger instead of relying only on balances.
 
 It ensures:
 
-* No duplicate transactions (idempotency)
-* No inconsistent state (database transactions)
-* Full traceability (ledger entries)
+- No duplicate transactions (idempotency)
+- No inconsistent state (database transactions)
+- Full traceability (ledger entries)
+- Race condition protection (row-level locking)
 
----
-
-## 🧠 Core Concepts
+## Core Concepts
 
 ### Ledger System
 
-A ledger records **every financial movement** instead of just storing balances.
+A ledger records every financial movement instead of just storing balances.
 
 ### Double-Entry Accounting
 
 Each transaction creates two entries:
 
-* **Debit** → money leaving an account
-* **Credit** → money entering an account
+- Debit: money leaving an account
+- Credit: money entering an account
 
-Example:
-User A sends $100 to User B:
+Example: User A sends $100 to User B:
 
-* A → debit 100
-* B → credit 100
+- A → debit 100
+- B → credit 100
 
-✔ Total debit always equals total credit
+Total debit always equals total credit.
 
----
+### Idempotency
 
-## 🏗️ Tech Stack
+Prevents duplicate financial operations. Client sends an `Idempotency-Key` header. The server hashes the request data and stores it. If the same request comes again with the same key and same data, the original response is replayed. If the same key comes with different data, the request is rejected.
 
-* **Go (Golang)**
-* **Fiber (HTTP framework)**
-* **GORM (ORM)**
-* **PostgreSQL**
-* **JWT Authentication**
+## Tech Stack
 
----
+- Go (Golang)
+- Fiber (HTTP framework)
+- GORM (ORM)
+- PostgreSQL
+- JWT Authentication
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 payment-ledger-system/
-
 cmd/
     main.go
-
 config/
     database.go
-
 internal/
     auth/
     user/
     middleware/
-
     wallet/
         model.go
         repository.go
         service.go
         handler.go
-
     transaction/
         model.go
         repository.go
         service.go
         handler.go
-
     ledger/
         model.go
         repository.go
-
     idempotency/
         model.go
         repository.go
-
     server/
         routes.go
-
 pkg/
     utils/
 ```
 
----
-
-## 🗄️ Database Design
+## Database Design
 
 ### Wallets
-
-* Stores user balances
+Stores user balances with row-level locking for concurrency safety.
 
 ### Transactions
-
-* Represents financial operations:
-
-  * deposit
-  * withdraw
-  * transfer
+Represents financial operations: deposit, withdraw, and transfer between users.
 
 ### Ledger Entries
-
-* Records debit/credit for each transaction
+Records debit and credit for each transaction, creating a complete audit trail.
 
 ### Idempotency Keys
+Stores hashed request data to prevent duplicate processing.
 
-* Prevent duplicate requests
+## Features
 
----
+### Authentication
+- User registration and login
+- JWT-based protected routes
 
-## 🔐 Features
-
-### ✅ Authentication
-
-* User registration & login
-* JWT-based protected routes
-
----
-
-### 💼 Wallet System
-
-* Auto-created per user
-* Balance tracking
-* Safe updates using DB transactions
-
----
-
-### 🔁 Transactions
-
-Supports:
-
-* Deposit
-* Withdraw
-* Transfer between users
-
-All operations:
-
-* Run inside database transactions
-* Update balances safely
-* Create ledger entries
-
----
-
-### 📒 Ledger (Double-Entry)
-
-Every transaction creates:
-
-* Debit entry
-* Credit entry
-
-Ensures:
-
-* Full audit trail
-* Financial correctness
-
----
-
-### 🔁 Idempotency (Retry Safety)
-
-Prevents duplicate financial operations.
-
-#### How it works:
-
-* Client sends `Idempotency-Key`
-* Server hashes request data
-* If request is repeated:
-
-  * Same data → response is replayed
-  * Different data → request is rejected
-
-✔ Guarantees safe retries
-✔ Prevents duplicate transfers
-
----
-
-### 🔒 Concurrency Safety
-
-* Row-level locking (`FOR UPDATE`)
-* Prevents race conditions and double-spending
-
----
-
-## ⚙️ API Endpoints
-
-### Auth
-
-* `POST /auth/register`
-* `POST /auth/login`
-
-### Wallet
-
-* `GET /wallet/balance`
+### Wallet System
+- Auto-created per user on registration
+- Balance tracking with safe updates using database transactions
 
 ### Transactions
+Supports deposit, withdraw, and transfer between users. All operations run inside database transactions, update balances safely, and create ledger entries.
 
-* `POST /wallet/deposit`
-* `POST /wallet/withdraw`
-* `POST /wallet/transfer`
+### Ledger (Double-Entry)
+Every transaction creates a debit entry and a credit entry, ensuring full audit trail and financial correctness.
 
----
+### Idempotency (Retry Safety)
+Safe retries are guaranteed by hashing the request body and storing it with the idempotency key. Duplicate requests with matching data get the original response. Mismatched data is rejected.
 
-## 🧪 Example Flow
+### Concurrency Safety
+Row-level locking prevents race conditions and double-spending during concurrent operations.
+
+## API Endpoints
+
+### Auth
+- `POST /auth/register`
+- `POST /auth/login`
+
+### Wallet
+- `GET /wallet/balance`
+
+### Transactions
+- `POST /wallet/deposit`
+- `POST /wallet/withdraw`
+- `POST /wallet/transfer`
+
+## Example Flow
 
 1. Register users
-2. Deposit funds
-3. Transfer money
-4. Retry transfer with same idempotency key
+2. Deposit funds into an account
+3. Transfer money between users
+4. Retry the same transfer with the same idempotency key
 
-✔ Only one transaction is created
-✔ Response is safely replayed
+Only one transaction is created. The response is safely replayed.
 
----
+## Safety Guarantees
 
-## 🛡️ Safety Guarantees
+- No duplicate transactions
+- No partial updates (ACID transactions)
+- No double-spending (row locking)
+- Full audit history (ledger entries)
+- Safe concurrent operations
 
-* No duplicate transactions
-* No partial updates (ACID transactions)
-* No double-spending (row locking)
-* Full audit history (ledger)
+## Future Improvements
 
----
+- Refund system (reverse transactions)
+- Transaction status tracking
+- External payment integrations
+- Async processing with message queues
 
-## 🚧 Future Improvements
+## Author
 
-* Refund system (reverse transactions)
-* Transaction status tracking
-* External payment integrations
-* Async processing (queues)
-
----
-
-## 🧑‍💻 Author
-
-Built as a backend engineering project focusing on **financial system design principles**.
-
----
+Built as a backend engineering project focusing on financial system design principles.
